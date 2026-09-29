@@ -13,7 +13,7 @@ Metro Atlanta has the highest eviction-filing rate in the United States: 24 fili
 ![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=flat-square&logo=vitest&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white)
 ![Rules Engine](https://img.shields.io/badge/Rules-Source--Cited-1D4ED8?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-17%20passing-1D4ED8?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-32%20passing-1D4ED8?style=flat-square)
 
 [![Typing SVG](https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=18&pause=1000&color=1D4ED8&center=true&vCenter=true&width=760&lines=7+days+to+answer.+Zero+room+for+a+wrong+date.;Weekends+count.+Holidays+roll+forward.+5%3A00+PM+cutoff.;Every+rule+cites+the+court+that+wrote+it.;Legal+information%2C+routed+to+free+legal+help.)](https://git.io/typing-svg)
 

@@ -22,6 +22,12 @@ export const SOURCES = {
     url: "https://georgia.gov/georgia-state-holidays-2026",
     retrieved: "2026-09-30",
   },
+  dekalbAnswerForm: {
+    id: "dekalb-answer-form",
+    title: "DeKalb County Dispossessory Answer (official check-box form)",
+    url: "https://dekalbgastatecourt.gov/wp-content/uploads/2025/10/DISPOSSESSORY-ANSWER-CHECK-BOX-fillable.pdf",
+    retrieved: "2026-09-30",
+  },
   evictionLabAtlanta: {
     id: "eviction-lab-atlanta",
     title: "Metro Atlanta leads the nation in eviction filings (Eviction Lab data via FOX 5 Atlanta)",

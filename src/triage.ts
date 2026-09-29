@@ -1,4 +1,5 @@
 import type { SourceId } from "./rules/sources.js";
+import { THREE_DAY_NOTICE_LEASES_FROM } from "./rules/answerForm.js";
 
 /**
  * Facts a tenant (or the document-extraction agent) can supply.
@@ -17,6 +18,20 @@ export interface CaseFacts {
   threatened?: boolean;
   namedWrongPerson?: boolean;
   filedByAgentNotOwner?: boolean;
+  /** ISO date the current lease was entered into. */
+  leaseStartDate?: string;
+  /** Did the landlord give a written notice to pay in full or move within 3 days before filing? */
+  threeDayNoticeReceived?: boolean;
+  /** Was the tenant told in writing that the tenancy was terminated / to move before filing? */
+  terminationNoticeReceived?: boolean;
+  plaintiffNotLandlord?: boolean;
+  noMoneyOwed?: boolean;
+  hasSection8Voucher?: boolean;
+  livesInForeclosedProperty?: boolean;
+  offeredRentOnTimeRefused?: boolean;
+  rentClaimedIncorrect?: boolean;
+  correctRentAmount?: string;
+  terminatedWithoutValidReason?: boolean;
 }
 
 export interface TriageOption {
@@ -64,6 +79,47 @@ export function triage(facts: CaseFacts): TriageResult {
         : "Offer full payment in a way you can prove, then file an Answer stating the money was offered and accepted (or refused).",
       kind: "cure",
       sources: src,
+    });
+  }
+
+  if (facts.threeDayNoticeReceived === false) {
+    const covered =
+      facts.leaseStartDate !== undefined && facts.leaseStartDate >= THREE_DAY_NOTICE_LEASES_FROM;
+    const unknownLease = facts.leaseStartDate === undefined;
+    if (covered || unknownLease) {
+      options.push({
+        id: "no-three-day-notice",
+        title: covered ? "Defense: no 3-day notice before filing" : "Check: did you get a 3-day notice?",
+        explanation:
+          "For leases entered on or after July 1, 2024, the landlord must give written notice, at least 3 days before filing, that you had 3 days to pay in full or move out. The court's own Answer form lists missing notice as a response.",
+        action: covered
+          ? "Check this response on your Answer. Keep every notice (or proof there wasn't one) and bring your lease showing its start date."
+          : "Find your lease start date. If it is July 1, 2024 or later and you got no written 3-day notice, this can be a strong response.",
+        kind: covered ? "defense" : "check",
+        sources: ["dekalbAnswerForm"],
+      });
+    }
+  }
+
+  if (facts.terminationNoticeReceived === false && facts.reason !== "nonpayment") {
+    options.push({
+      id: "improper-termination-notice",
+      title: "Defense: no proper notice to move",
+      explanation: "The Answer form lets you state the landlord did not give proper notice that the tenancy was ending, or that you had to move, before filing.",
+      action: "Check this response and bring any notices you did receive, with dates.",
+      kind: "defense",
+      sources: ["dekalbAnswerForm"],
+    });
+  }
+
+  if (facts.rentClaimedIncorrect) {
+    options.push({
+      id: "rent-amount-incorrect",
+      title: "Dispute the amount claimed",
+      explanation: "If the landlord's figure is wrong, the Answer form lets you state the correct amount; the judge decides what, if anything, is owed.",
+      action: "Write the correct amount on your Answer and bring your lease, receipts, and bank records.",
+      kind: "defense",
+      sources: ["dekalbAnswerForm", "fultonTenantPamphlet"],
     });
   }
 
