@@ -1,0 +1,18 @@
+{
+  "name": "docketshield",
+  "version": "0.1.0",
+  "description": "Agentic legal-deadline engine for Georgia's eviction crisis: from a served dispossessory warrant to a filed Answer before day 7.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
