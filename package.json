@@ -1,7 +1,7 @@
 {
   "name": "docketshield",
   "version": "0.1.0",
-  "description": "Agentic legal-deadline engine for Georgia's eviction crisis: from a served dispossessory warrant to a filed Answer before day 7.",
+  "description": "Source-backed Georgia eviction response deadlines, reviewable Answer drafts, and filing guidance.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

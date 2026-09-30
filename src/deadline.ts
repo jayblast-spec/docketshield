@@ -27,6 +27,18 @@ export interface DeadlineResult {
   sources: SourceId[];
 }
 
+export class UnverifiedCalendarError extends Error {
+  constructor(year: number) {
+    super(`No verified Georgia holiday calendar for ${year}. DocketShield cannot calculate your deadline. Check your summons and contact the court clerk today.`);
+    this.name = "UnverifiedCalendarError";
+  }
+}
+
+function requireVerifiedCalendar(date: string): void {
+  const year = Number(date.slice(0, 4));
+  if (!hasVerifiedHolidayCalendar(year)) throw new UnverifiedCalendarError(year);
+}
+
 const ANSWER_WINDOW_DAYS = 7;
 const MAX_ROLLOVER_DAYS = 10; // guard against a broken calendar looping forever
 
@@ -59,8 +71,10 @@ export function computeAnswerDeadline(
   trace.push({ date: serviceDate, note: "Served (day 0, not counted)", kind: "served" });
   trace.push({ date: seventhDay, note: "Day 7: weekends and holidays inside the window still count", kind: "window" });
 
+  requireVerifiedCalendar(seventhDay);
   let deadline = seventhDay;
   for (let i = 0; i < MAX_ROLLOVER_DAYS; i++) {
+    requireVerifiedCalendar(deadline);
     const reason = closedReason(deadline);
     if (!reason) break;
     trace.push({ date: deadline, note: `Skipped: ${reason}`, kind: "skipped" });
@@ -71,13 +85,6 @@ export function computeAnswerDeadline(
   }
   trace.push({ date: deadline, note: `Last day to file your Answer, by 5:00 PM (${weekdayName(deadline)})`, kind: "deadline" });
 
-  for (const y of new Set([Number(seventhDay.slice(0, 4)), Number(deadline.slice(0, 4))])) {
-    if (!hasVerifiedHolidayCalendar(y)) {
-      warnings.push(
-        `No verified Georgia holiday calendar for ${y}; weekends are handled but a holiday could move this deadline. Confirm the date printed on your papers.`,
-      );
-    }
-  }
   if (method === "tack-and-mail") {
     warnings.push(
       "Tack-and-mail service: confirm the service date with the court clerk; the date on the papers controls.",

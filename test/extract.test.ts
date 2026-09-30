@@ -19,7 +19,7 @@ const good = {
 describe("reviewExtraction: never trusts the model blindly", () => {
   it("accepts a clean, confident extraction and confirms the printed deadline against the rules", () => {
     const r = reviewExtraction(good);
-    expect(r.needsConfirmation).toEqual([]);
+    expect(r.needsConfirmation).toEqual(Object.keys(good));
     expect(r.checks[0]?.kind).toBe("deadline-match");
   });
 
@@ -28,6 +28,14 @@ describe("reviewExtraction: never trusts the model blindly", () => {
     expect(r.checks[0]?.kind).toBe("deadline-mismatch");
     expect(r.checks[0]?.message).toMatch(/EARLIER/);
     expect(r.needsConfirmation).toContain("serviceDate");
+  });
+
+  it("keeps extracted fields available when the calendar cannot verify a deadline", () => {
+    const r = reviewExtraction({ ...good, serviceDate: f("2026-12-28"), printedAnswerDeadline: f("2027-01-04") });
+    expect(r.fields.serviceDate.value).toBe("2026-12-28");
+    expect(r.checks[0]?.kind).toBe("deadline-unverified");
+    expect(r.checks[0]?.message).toMatch(/2027/);
+    expect(r.checks.some((check) => check.kind === "deadline-match")).toBe(false);
   });
 
   it("routes low-confidence and missing fields to the tenant", () => {
