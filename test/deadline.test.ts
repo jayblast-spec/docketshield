@@ -64,3 +64,12 @@ describe("daysRemaining", () => {
     expect(daysRemaining("2026-10-07", "2026-10-09")).toBe(-2);
   });
 });
+
+describe("trace: readable, typed timeline", () => {
+  it("names the holiday, types every step, and ends on the deadline", () => {
+    const r = computeAnswerDeadline("2026-10-03", "personal");
+    expect(r.trace.map((s) => s.kind)).toEqual(["served", "window", "skipped", "skipped", "skipped", "deadline"]);
+    expect(r.trace.find((s) => s.date === "2026-10-12")?.note).toMatch(/Columbus Day/);
+    expect(r.trace.at(-1)).toMatchObject({ date: "2026-10-13", kind: "deadline" });
+  });
+});

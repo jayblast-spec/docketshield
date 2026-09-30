@@ -16,7 +16,8 @@ export type AnswerGroundId =
   | "tender-with-costs-refused"
   | "rent-amount-incorrect"
   | "terminated-without-reason"
-  | "failed-to-repair";
+  | "failed-to-repair"
+  | "not-entitled-other";
 
 export interface AnswerGround {
   id: AnswerGroundId;
@@ -52,6 +53,10 @@ export const ANSWER_GROUNDS: readonly AnswerGround[] = [
   { id: "rent-amount-incorrect", formText: "The rent claimed by the landlord is incorrect. The correct rental amount is {amount}." },
   { id: "terminated-without-reason", formText: "My landlord terminated my lease without a valid reason." },
   { id: "failed-to-repair", formText: "My landlord failed to repair the property. (See Counterclaim below for failure to repair.)" },
+  {
+    id: "not-entitled-other",
+    formText: "My landlord is not entitled to evict me or secure a money judgment for the following reasons: {reasons}",
+  },
 ];
 
 export type CounterclaimId = "diminished-value" | "repair-costs" | "damages";

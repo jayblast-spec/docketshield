@@ -60,3 +60,20 @@ describe("triage: Safe-at-Home 3-day notice", () => {
     expect(triage({ threeDayNoticeReceived: false, leaseStartDate: "2022-01-01" }).options.find((o) => o.id === "no-three-day-notice")).toBeUndefined();
   });
 });
+
+describe("draftAnswer: illegal self-help eviction", () => {
+  it("adds the form's 'not entitled to evict' line listing each self-help act", () => {
+    const d = draftAnswer({ lockedOut: true, utilitiesShutOff: true }, caption);
+    const g = d.grounds.find((x) => x.id === "not-entitled-other");
+    expect(g?.text).toMatch(/not entitled to evict me/);
+    expect(g?.text).toMatch(/changed the locks/);
+    expect(g?.text).toMatch(/shut off my utilities/);
+  });
+
+  it("renders a signature block that survives narrow screens", () => {
+    const text = renderAnswerText(draftAnswer({ noMoneyOwed: true }, caption));
+    // Sentences wrap naturally; unbreakable runs (long underscores, no spaces) are what overflow a phone.
+    for (const run of text.split(/\s+/)) expect(run.length).toBeLessThanOrEqual(28);
+    expect(text).toMatch(/Defendant signature:/);
+  });
+});

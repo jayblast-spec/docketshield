@@ -1,5 +1,5 @@
 import { addDays, assertIsoDate, isWeekend, weekdayName } from "./dates.js";
-import { hasVerifiedHolidayCalendar, isGeorgiaStateHoliday } from "./rules/holidays.js";
+import { georgiaHolidayName, hasVerifiedHolidayCalendar } from "./rules/holidays.js";
 import { SOURCES, type SourceId } from "./rules/sources.js";
 
 export type ServiceMethod = "personal" | "left-with-adult" | "tack-and-mail" | "unknown";
@@ -7,6 +7,8 @@ export type ServiceMethod = "personal" | "left-with-adult" | "tack-and-mail" | "
 export interface DeadlineStep {
   date: string;
   note: string;
+  /** served = day 0, window = day 7, skipped = court closed, deadline = final filing day */
+  kind: "served" | "window" | "skipped" | "deadline";
 }
 
 export interface DeadlineResult {
@@ -30,7 +32,8 @@ const MAX_ROLLOVER_DAYS = 10; // guard against a broken calendar looping forever
 
 function closedReason(date: string): string | null {
   if (isWeekend(date)) return `${weekdayName(date)} (court closed)`;
-  if (isGeorgiaStateHoliday(date)) return "Georgia state holiday (court closed)";
+  const holiday = georgiaHolidayName(date);
+  if (holiday) return `${holiday}, a Georgia state holiday (court closed)`;
   return null;
 }
 
@@ -53,19 +56,20 @@ export function computeAnswerDeadline(
   const trace: DeadlineStep[] = [];
 
   const seventhDay = addDays(serviceDate, ANSWER_WINDOW_DAYS);
-  trace.push({ date: serviceDate, note: "Served (day 0, not counted)" });
-  trace.push({ date: seventhDay, note: "Day 7: weekends and holidays inside the window still count" });
+  trace.push({ date: serviceDate, note: "Served (day 0, not counted)", kind: "served" });
+  trace.push({ date: seventhDay, note: "Day 7: weekends and holidays inside the window still count", kind: "window" });
 
   let deadline = seventhDay;
   for (let i = 0; i < MAX_ROLLOVER_DAYS; i++) {
     const reason = closedReason(deadline);
     if (!reason) break;
-    trace.push({ date: deadline, note: `Skipped: ${reason}` });
+    trace.push({ date: deadline, note: `Skipped: ${reason}`, kind: "skipped" });
     deadline = addDays(deadline, 1);
   }
   if (closedReason(deadline)) {
     throw new Error("Deadline rollover did not resolve to an open court day; holiday data is inconsistent");
   }
+  trace.push({ date: deadline, note: `Last day to file your Answer, by 5:00 PM (${weekdayName(deadline)})`, kind: "deadline" });
 
   for (const y of new Set([Number(seventhDay.slice(0, 4)), Number(deadline.slice(0, 4))])) {
     if (!hasVerifiedHolidayCalendar(y)) {

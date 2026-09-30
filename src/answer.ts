@@ -89,6 +89,15 @@ export function draftAnswer(facts: CaseFacts, caption: CaseCaption, cc: Counterc
   }
   if (facts.terminatedWithoutValidReason) add("terminated-without-reason", "Lease terminated without a valid reason.");
   if (facts.repairRequestedInWriting && facts.repairIgnored) add("failed-to-repair", "Written repair request was ignored.");
+  const selfHelp = [
+    facts.lockedOut && "the landlord changed the locks or blocked my access to the home",
+    facts.utilitiesShutOff && "the landlord shut off my utilities",
+    facts.threatened && "the landlord threatened me to force me to leave",
+  ].filter((x): x is string => Boolean(x));
+  if (selfHelp.length) {
+    const reasons = `${selfHelp.join("; ")}. These are illegal self-help eviction acts under Georgia law.`;
+    add("not-entitled-other", "Tenant reports illegal self-help eviction acts.", { reasons: reasons.charAt(0).toUpperCase() + reasons.slice(1) });
+  }
 
   const counterclaims: { id: CounterclaimId; text: string }[] = [];
   if (cc.diminishedValuePerMonth && cc.diminishedValueMonths) {
@@ -149,8 +158,10 @@ export function renderAnswerText(d: AnswerDraft): string {
     "",
     d.certificateOfService,
     "",
-    "__________________________   __________________________",
-    "Defendant                    Phone Number and Email Address",
+    "Defendant signature: ____________________",
+    "Printed name: ____________________",
+    "Phone and email: ____________________",
+    "Date: ____________________",
   ];
   return lines.join("\n");
 }
