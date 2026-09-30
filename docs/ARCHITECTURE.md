@@ -1,48 +1,48 @@
-# DocketShield Architecture
+# DocketShield architecture
 
-## Problem, in numbers
-
-- Metro Atlanta landlords filed about **144,000 evictions** in a year, the **highest eviction-filing rate in the US**: 24 per 100 renter households, about **3x the national average** (Eviction Lab data, reported by FOX 5 Atlanta).
-- Roughly **15% of metro evictions come from just 100 buildings**, a small set of serial filers.
-- In Georgia, a tenant has **7 days** after service to file an Answer. Miss it and the landlord may seek removal on **day 8** (Fulton County Magistrate Court Tenant Pamphlet).
-
-The failure point is not the law. It is time, confusion, and a single wrong date.
-
-## Agent pipeline
+## Implemented flow
 
 ```mermaid
 flowchart LR
-    A[Photo of dispossessory warrant] --> B[Extraction agent<br/>case no., county, service date,<br/>method, landlord, claim]
-    B --> C{Confidence check}
-    C -- low --> H[Ask tenant to confirm fields]
-    H --> D
-    C -- high --> D[Deadline engine<br/>src/deadline.ts]
-    D --> E[Triage engine<br/>src/triage.ts]
-    E --> F[Answer drafting agent<br/>admit/deny + defenses + counterclaims]
-    F --> G[Routing agent<br/>county court, e-file, legal aid]
-    D --> R[SMS countdown reminders]
-    B --> S[Serial-filer signal<br/>landlord / building history]
+  A[Photo or PDF] --> B[Gemini structured extraction]
+  M[Manual entry] --> C[Review case details]
+  B --> C
+  C --> D{Verified deadline-year calendar?}
+  D -- No --> E[Stop calculation and contact clerk]
+  D -- Yes --> F[Deterministic deadline and source trace]
+  F --> G[Situation questions and source-backed options]
+  G --> H[Reviewable Answer draft]
+  H --> I[County-aware filing guidance and legal help]
 ```
 
-| Stage | Status | Guarantee |
+The extraction API marks every field for review. In the app, each scanned or sample field needs explicit checkbox confirmation, including blanks. Editing a confirmed field clears that confirmation. Deadline checks are recalculated from the edited values rather than trusting the initial extraction message.
+
+## Current status
+
+| Stage | Status | Boundary |
 |---|---|---|
-| Deadline engine | **Built, 10 tests** | Exact Georgia rollover; fails closed on unverified calendars |
-| Triage engine | **Built, 7 tests** | Only court-recognized options; unknown facts produce nothing |
-| Extraction agent | Planned | Every extracted field shown to the tenant before use |
-| Answer drafting | Planned | Output is a draft for the tenant or legal aid to review, never auto-filed |
-| Routing | Planned (Fulton first) | County data sourced from each Magistrate Court |
-| Serial-filer signal | Planned | Built on public filing data only |
+| Extraction | Implemented with model fallback | Gemini-generated values, confidence, and evidence require human review |
+| Deadline | Implemented | Verified 2026 calendar only; unsupported years stop calculation |
+| Triage | Implemented | Deterministic rules based on supplied facts |
+| Draft | Implemented | Template-based, for review; never auto-filed |
+| Tenant app | Implemented | Guided mobile web flow and sample case |
+| Filing guidance | Implemented, Fulton details | Other counties use their summons and clerk; no automatic Fulton routing |
+| SMS reminders | Planned | No claim of delivery |
+| Serial-filer analysis | Planned | No public-data pipeline implemented |
+| Independent legal validation | Pending | Automated tests do not replace outside review |
 
-## Design principles
+## Code boundaries
 
-1. **Correct beats clever.** A deadline that is off by one day is worse than no tool. Dates are pinned by tests against hand-checked cases.
-2. **Every rule cites its source.** `src/rules/sources.ts` is the single registry.
-3. **Fail closed.** When the engine cannot be sure, it says so and points to the papers and the clerk.
-4. **Information, not advice.** The product routes people to free lawyers; it does not replace them.
+- src/extract.ts: model response normalization and document/deadline comparison.
+- src/deadline.ts and src/rules/holidays.ts: calendar arithmetic and verified holiday data.
+- src/triage.ts: options derived from supplied facts.
+- src/answer.ts and src/rules/answerForm.ts: draft text and its source templates.
+- src/rules/sources.ts: source registry.
+- api/: Vercel HTTP endpoints; errors preserve unsupported-calendar explanations.
+- Separate docketshield-app repository: confirmation UI, API schemas, draft display, and county-aware filing guidance.
 
-## Roadmap to WarriorHacks submission (Oct 13, 11:45 PM CT)
+## Submission preparation
 
-1. Extraction agent on real sample warrants (redacted, synthetic data only in the repo).
-2. Tenant-facing mobile-first flow: upload → confirm facts → deadline countdown → options → draft Answer → where to file.
-3. Fulton County routing, then DeKalb, Cobb, Clayton, Gwinnett with sourced court data.
-4. Demo video and Devpost write-up.
+Confirm the current WarriorHacks rules and deadline from the organizer. The previously documented date was not independently verified.
+
+Before claiming readiness: run CI, exercise the real deployed scan and manual journeys, review supported rules with a qualified Georgia housing-law reviewer, and record a demonstration showing both a successful case and an uncertainty case. See VALIDATION.md.

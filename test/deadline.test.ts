@@ -35,11 +35,11 @@ describe("computeAnswerDeadline: Georgia 7-day dispossessory Answer rule", () =>
     expect(computeAnswerDeadline("2026-12-17", "personal").deadline).toBe("2026-12-28");
   });
 
-  it("fails closed with a warning when the holiday calendar for a year is unverified", () => {
-    const r = computeAnswerDeadline("2026-12-28", "personal"); // day 7 = Mon Jan 4 2027
-    expect(r.deadline).toBe("2027-01-04");
-    expect(r.warnings.some((w) => w.includes("2027"))).toBe(true);
+  it("refuses to return a deadline when the holiday calendar is unverified", () => {
+    expect(() => computeAnswerDeadline("2026-12-28", "personal")).toThrow(/No verified Georgia holiday calendar for 2027/);
+    expect(() => computeAnswerDeadline("2025-09-30", "personal")).toThrow(/No verified Georgia holiday calendar for 2025/);
   });
+
 
   it("warns on tack-and-mail and unknown service methods", () => {
     expect(computeAnswerDeadline("2026-09-30", "tack-and-mail").warnings.join(" ")).toMatch(/clerk/);

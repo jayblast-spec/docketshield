@@ -1,4 +1,4 @@
-import { computeAnswerDeadline, type ServiceMethod } from "./deadline.js";
+import { computeAnswerDeadline, UnverifiedCalendarError, type ServiceMethod } from "./deadline.js";
 
 /**
  * Document-extraction agent for Georgia dispossessory warrants.
@@ -39,7 +39,7 @@ export interface ExtractionReview {
   /** Fields the tenant must confirm or fill before we rely on them. */
   needsConfirmation: FieldName[];
   /** Cross-checks between the paper and the rules engine. */
-  checks: { kind: "deadline-match" | "deadline-mismatch" | "no-printed-deadline"; message: string }[];
+  checks: { kind: "deadline-match" | "deadline-mismatch" | "no-printed-deadline" | "deadline-unverified"; message: string }[];
 }
 
 export const CONFIDENCE_THRESHOLD = 0.85;
@@ -96,23 +96,29 @@ export function reviewExtraction(raw: unknown): ExtractionReview {
   const obj = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
   const fields = Object.fromEntries(FIELD_NAMES.map((n) => [n, normalizeField(n, obj[n])])) as unknown as WarrantExtraction;
 
-  const needsConfirmation = FIELD_NAMES.filter((n) => fields[n].value === null || fields[n].confidence < CONFIDENCE_THRESHOLD);
+  // Every field needs explicit human review, including high-confidence values and blanks.
+  const needsConfirmation = [...FIELD_NAMES];
 
   const checks: ExtractionReview["checks"] = [];
   const served = fields.serviceDate.value;
   const printed = fields.printedAnswerDeadline.value;
   if (served) {
-    const computed = computeAnswerDeadline(served, (fields.serviceMethod.value as ServiceMethod | null) ?? "unknown").deadline;
-    if (!printed) {
-      checks.push({ kind: "no-printed-deadline", message: `No deadline was read from the papers. By Georgia's rule it is ${computed} at 5:00 PM; confirm with the clerk.` });
-    } else if (printed === computed) {
-      checks.push({ kind: "deadline-match", message: `The papers and Georgia's rule agree: answer by ${computed}, 5:00 PM.` });
-    } else {
-      checks.push({
-        kind: "deadline-mismatch",
-        message: `The papers say ${printed}, but Georgia's rule from the service date gives ${computed}. Use the EARLIER date and call the clerk today.`,
-      });
-      if (!needsConfirmation.includes("serviceDate")) needsConfirmation.push("serviceDate");
+    try {
+      const computed = computeAnswerDeadline(served, (fields.serviceMethod.value as ServiceMethod | null) ?? "unknown").deadline;
+      if (!printed) {
+        checks.push({ kind: "no-printed-deadline", message: `No deadline was read from the papers. By Georgia's rule it is ${computed} at 5:00 PM; confirm with the clerk.` });
+      } else if (printed === computed) {
+        checks.push({ kind: "deadline-match", message: `The papers and Georgia's rule agree: answer by ${computed}, 5:00 PM.` });
+      } else {
+        checks.push({
+          kind: "deadline-mismatch",
+          message: `The papers say ${printed}, but Georgia's rule from the service date gives ${computed}. Use the EARLIER date and call the clerk today.`,
+        });
+        if (!needsConfirmation.includes("serviceDate")) needsConfirmation.push("serviceDate");
+      }
+    } catch (error) {
+      if (!(error instanceof UnverifiedCalendarError)) throw error;
+      checks.push({ kind: "deadline-unverified", message: error.message });
     }
   }
   return { fields, needsConfirmation, checks };

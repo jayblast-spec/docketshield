@@ -1,61 +1,51 @@
-<div align="center">
-
 # DocketShield
 
-### From a served eviction notice to a filed Answer, before day 7.
+**Served papers → source-backed response deadline → draft Answer → filing guidance.**
 
-Metro Atlanta has the highest eviction-filing rate in the United States: 24 filings per 100 renter households, three times the national average. In Georgia a tenant has seven days after service to file an Answer, or the landlord may seek removal on the eighth day. DocketShield is an agentic legal-deadline system that reads the dispossessory papers, computes the exact filing deadline under Georgia rules, surfaces the defenses and counterclaims the court actually recognizes, and routes the tenant to free legal help, with every rule traced to a primary court source.
+DocketShield helps Georgia renters understand a dispossessory summons, review their response deadline, prepare a draft Answer, and find filing information and free legal help. It provides legal information, not legal advice. It does not submit documents or confirm that an Answer was filed.
 
-[![Live Demo](https://img.shields.io/badge/Live_Demo-docketshield--app.vercel.app-1D4ED8?style=for-the-badge&logo=vercel)](https://docketshield-app.vercel.app)
-[![Devpost](https://img.shields.io/badge/Devpost-WarriorHacks_2.0-1D4ED8?style=for-the-badge&logo=devpost)](https://devpost.com/software/warriorhacks-team-arknet-digital-lakshmi)
-[![GitHub Repo](https://img.shields.io/badge/GitHub-Repo-181717?style=for-the-badge&logo=github)](https://github.com/jayblast-spec/docketshield)
+- [Tenant app](https://docketshield-app.vercel.app) — choose “Try with a sample case”
+- [App source](https://github.com/jayblast-spec/docketshield-app)
+- [API health](https://docketshield.vercel.app/api/health)
+- [WarriorHacks submission](https://devpost.com/software/warriorhacks-team-arknet-digital-lakshmi)
 
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=flat-square&logo=vitest&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white)
-![Rules Engine](https://img.shields.io/badge/Rules-Source--Cited-1D4ED8?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-35%20passing-1D4ED8?style=flat-square)
+## Working implementation
 
-[![Typing SVG](https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=18&pause=1000&color=1D4ED8&center=true&vCenter=true&width=760&lines=7+days+to+answer.+Zero+room+for+a+wrong+date.;Weekends+count.+Holidays+roll+forward.+5%3A00+PM+cutoff.;Every+rule+cites+the+court+that+wrote+it.;Legal+information%2C+routed+to+free+legal+help.)](https://git.io/typing-svg)
-
-</div>
-
-## What It Does
-
-DocketShield turns the most dangerous week of a renter's life into a clear, correct plan. Given the date a tenant was served and how, its deadline engine applies Georgia's dispossessory rule exactly: seven calendar days that include weekends and holidays, with the final day rolled forward past any Saturday, Sunday, or Georgia state holiday to the next open court day, closing at 5:00 PM. It shows its reasoning day by day, refuses to guess when a year's official holiday calendar is not verified, and warns when the service method means the tenant should confirm the date with the clerk. A triage engine then maps the tenant's facts to the options the Fulton County Magistrate Court itself describes (pay-and-stay for a first filing in twelve months, refused-tender pleading, illegal self-help eviction counterclaims, repair-and-deduct, wrong-party and agent-authority checks) and states plainly what is not a defense, so the tenant spends their seven days on what can actually work.
-
-## How It Works
-
-- `src/deadline.ts`: `computeAnswerDeadline()` implements the 7-day Answer rule with weekend and holiday rollover, a day-by-day reasoning trace, fail-closed warnings for unverified calendars and uncertain service, and source citations on every result.
-- `src/rules/holidays.ts`: the official 2026 Georgia state holiday calendar from Georgia.gov, including the stacked Thanksgiving and December 24/25 closures that silently break naive date math.
-- `src/dates.ts`: timezone-proof ISO calendar arithmetic that validates real dates and never depends on the host machine's clock.
-- `src/triage.ts`: `triage()` maps case facts to cures, defenses, counterclaims, and procedural checks, each with a plain-language explanation, a concrete action before the deadline, and its source; unknown facts never produce options.
-- `src/rules/sources.ts`: the registry of primary sources (Fulton County Magistrate Court Tenant Pamphlet, Georgia.gov holiday proclamation, Eviction Lab data) that every rule references.
-- `test/`: 17 Vitest cases pinning the exact dates for ordinary weeks, stacked weekend-plus-holiday rollovers, year-boundary calendars, invalid input, and each triage branch.
-- `docs/ARCHITECTURE.md`: the full agent pipeline (document extraction, deadline, triage, Answer drafting, legal-aid routing, serial-filer detection) and the build roadmap.
-
-## Live
-
-- Tenant app: [docketshield-app.vercel.app](https://docketshield-app.vercel.app) (tap "Try with a sample case"; source: [jayblast-spec/docketshield-app](https://github.com/jayblast-spec/docketshield-app))
-- Rules API: [docketshield.vercel.app](https://docketshield.vercel.app/api/health)
-- Devpost: [DocketShield (WarriorHacks 2.0)](https://devpost.com/software/warriorhacks-team-arknet-digital-lakshmi)
-
-## Tech Stack
-
-| Layer | Technology |
+| Component | Behavior |
 |---|---|
-| Rules engine | TypeScript (strict), zero runtime dependencies |
-| Testing | Vitest |
-| Legal sources | Fulton County Magistrate Court, Georgia.gov, Eviction Lab |
-| Document agent (roadmap) | Vision LLM extraction of dispossessory warrants |
-| Interface (roadmap) | Mobile-first web app, SMS deadline reminders |
+| Gemini extraction | Extracts structured fields with supporting text and model-reported confidence; validates dates and enums; asks for review of every field |
+| Deadline engine | Applies the source-described seven-day rule and weekend/holiday rollover; refuses to return a deadline without a verified calendar |
+| Triage | Maps supplied facts to source-backed options; unknown facts remain unknown |
+| Answer drafting | Produces a reviewable text draft from case facts; lists missing information; never files it |
+| Tenant interface | Scan or manual entry, explicit field confirmation, deadline reasoning, situation questions, options, draft, and filing guidance |
+| Local routing | Fulton office details only for a Fulton case; other counties receive instructions to consult the court on the summons |
 
----
+## Run and verify
 
-> DocketShield provides legal information, not legal advice. Free help: Housing Court Assistance Center (Fulton County Magistrate Court Clerk's Office, TG-100), Atlanta Legal Aid Society, Georgia Legal Services Program, Atlanta Volunteer Lawyers Foundation.
+Requires Node.js 22 or newer.
 
-<div align="center">
+```sh
+npm ci
+npm run typecheck
+npm run build
+npm test
+npx tsc -p tsconfig.api.json --noEmit
+```
 
-![footer](https://capsule-render.vercel.app/api?type=waving&color=0:1D4ED8,55:0B1E3D,100:020617&height=120&section=footer&text=ArkNet%20Digital&fontColor=ffffff&fontSize=28&desc=michael@arknet.digital&descAlignY=80&descSize=14)
+Tests cover deadline rollover, unverified calendars, malformed extraction, document/rule conflicts, triage, and Answer drafting. GitHub Actions runs these checks on pull requests. Test counts should be read from the runner rather than a manually maintained badge.
 
-</div>
+The API exposes POST /api/extract, /api/deadline, /api/triage, and /api/draft. Extraction requires a server-side GEMINI_API_KEY. The deadline endpoint returns HTTP 422 with a readable explanation when the holiday calendar is unsupported.
+
+## Trust boundaries and limitations
+
+- Only the 2026 Georgia state holiday calendar is included. A date in another deadline year produces an error, not an estimated deadline.
+- The rules reference Fulton materials; county-specific closures, forms, filing methods, and case circumstances still need confirmation with the court.
+- Model confidence is self-reported, not a calibrated accuracy measurement. Quoted extraction evidence is also model output and must be checked against the document.
+- A printed deadline that conflicts with the calculation requires prompt clerk review. Editing the service date or printed deadline triggers a fresh comparison.
+- The Answer draft draws on a DeKalb form and Fulton information. It is not a claim that every court accepts this output as an official form.
+- Documents are sent to Google Gemini. The repository's lack of document persistence does not establish provider retention behavior.
+- Automated tests and synthetic samples are developer-authored regression evidence, not independent legal review, field accuracy, or proof of reduced evictions.
+
+See [architecture](docs/ARCHITECTURE.md) and [validation and demo plan](docs/VALIDATION.md). SMS reminders, serial-filer analysis, independent legal validation, and measured tenant outcomes remain future work.
+
+Built by ArkNet Digital.
