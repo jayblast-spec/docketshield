@@ -6,6 +6,7 @@
 
 Metro Atlanta has the highest eviction-filing rate in the United States: 24 filings per 100 renter households, three times the national average. In Georgia a tenant has seven days after service to file an Answer, or the landlord may seek removal on the eighth day. DocketShield is an agentic legal-deadline system that reads the dispossessory papers, computes the exact filing deadline under Georgia rules, surfaces the defenses and counterclaims the court actually recognizes, and routes the tenant to free legal help, with every rule traced to a primary court source.
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-docketshield--app.vercel.app-1D4ED8?style=for-the-badge&logo=vercel)](https://docketshield-app.vercel.app)
 [![Devpost](https://img.shields.io/badge/Devpost-WarriorHacks_2.0-1D4ED8?style=for-the-badge&logo=devpost)](https://devpost.com/software/warriorhacks-team-arknet-digital-lakshmi)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Repo-181717?style=for-the-badge&logo=github)](https://github.com/jayblast-spec/docketshield)
 
@@ -35,7 +36,9 @@ DocketShield turns the most dangerous week of a renter's life into a clear, corr
 
 ## Live
 
-[DocketShield on Devpost (WarriorHacks 2.0)](https://devpost.com/software/warriorhacks-team-arknet-digital-lakshmi). The rules engine is live in this repo today; the tenant-facing app is in active build.
+- Tenant app: [docketshield-app.vercel.app](https://docketshield-app.vercel.app) (tap "Try with a sample case"; source: [jayblast-spec/docketshield-app](https://github.com/jayblast-spec/docketshield-app))
+- Rules API: [docketshield.vercel.app](https://docketshield.vercel.app/api/health)
+- Devpost: [DocketShield (WarriorHacks 2.0)](https://devpost.com/software/warriorhacks-team-arknet-digital-lakshmi)
 
 ## Tech Stack
 
